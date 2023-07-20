@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>interactivity #1</title>
+        <style>
+            body{
+                background-color: #000;
+                color: #fff;
+                font-family: monospace;
+                font-size: large;
+            }
+            div>div{
+                padding-left: 20vw;
+                margin-bottom: 1em;
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+            }
+            div>div>img{
+                margin-right: 1em;
+            }
+            div>div>p{
+                font-size: 1.5em;
+                max-width: 60vw;
+            }
+            img{
+                height: 150px;
+                width: 150px;
+            }
+            input{
+                position: sticky;
+                bottom: 0;
+                width: 60vw;
+                left: 20vw;
+                font-size: 1em;
+                background-color: #000;
+                color: #fff;
+            }
+            input:focus{
+                outline: none;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>interactivity #1</h1>
+        <div>
+        </div>
+        <input id="shibb" placeholder="Type a message (or dont)">
+        <script src="https://unpkg.com/showdown/dist/showdown.min.js"></script>
+        <script>
+            var converter = new showdown.Converter();
+            let ws = new WebSocket("ws://localhost:3000/");
+            ws.onopen = function(){
+                //alert("ws connection succeeded "+ws.readyState+" at "+new Date().getTime());
+            }
+            ws.onmessage = function(e){
+                e = JSON.parse(e.data);
+                if(e.type == "message"){
+                    let div = document.createElement("div");
+                    let img = document.createElement("img");
+                    img.id = e.uid;
+                    let p = document.createElement("p");
+                    p.innerHTML = converter.makeHtml(e.message);
+                    div.appendChild(img);
+                    div.appendChild(p);
+                    document.body.children[1].appendChild(div);
+                } else if (e.type == "image"){
+                    document.getElementById(e.uid).src = e.image;
+                }
+            }
+            document.getElementById("shibb").addEventListener("keydown", function(e){
+                if(e.keyCode == 13){
+                    ws.send(JSON.stringify({
+                        type: "query",
+                        text: document.getElementById("shibb").value
+                    }));
+                    let div = document.createElement("div");
+                    let img = document.createElement("img");
+                    let p = document.createElement("p");
+                    p.innerHTML = converter.makeHtml(document.getElementById("shibb").value);
+                    div.appendChild(img);
+                    div.appendChild(p);
+                    document.body.children[1].appendChild(div);
+                    document.getElementById("shibb").value = "";
+                }
+            });
+        </script>
+    </body>
+</html>
